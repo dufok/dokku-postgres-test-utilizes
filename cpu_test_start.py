@@ -4,7 +4,7 @@ import threading
 from random import randint
 from tqdm import tqdm
 
-def run_queries(dsn):
+def run_queries(dsn, total_iterations):
     try:
         conn = psycopg2.connect(dsn)
         cur = conn.cursor()
@@ -12,7 +12,7 @@ def run_queries(dsn):
         cur.execute("CREATE TABLE IF NOT EXISTS another_table (id serial PRIMARY KEY, value integer);")
         conn.commit()
 
-        for i in tqdm(range(1000)):
+        for i in range(total_iterations):
             random_num = randint(0, 1000)
             cur.execute("INSERT INTO test_table (num) VALUES (%s);", (random_num,))
             cur.execute("INSERT INTO another_table (value) VALUES (%s);", (random_num,))
@@ -38,12 +38,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     num_threads = 5  # Number of threads to create
+    total_iterations = 10000  # Number of iterations for each thread
 
     print(f"Starting {num_threads} threads to connect to the database and run queries.")
 
     threads = []
     for i in range(num_threads):
-        thread = threading.Thread(target=run_queries, args=(args.data_source_name,))
+        thread = threading.Thread(target=run_queries, args=(args.data_source_name, total_iterations))
         thread.start()
         threads.append(thread)
 
@@ -51,4 +52,3 @@ if __name__ == "__main__":
         thread.join()
 
     print("All threads completed.")
-
